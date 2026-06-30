@@ -1,0 +1,22 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.0/spdx-context.jsonld",
+  "@graph": [
+    {
+      "@id": "urn:spdx.org:doc1",
+      "@type": "SpdxDocument",
+      "name": "SPDX 3.0 Example",
+      "creationInfo": {
+        "created": "2024-06-30T13:40:00Z",
+        "createdUsing": ["Tool:SPDX3-Gen"]
+      }
+    },
+    {
+      "@id": "urn:spdx.org:pkg1",
+      "@type": "Package",
+      "name": "core-lib",
+      "packageVersion": "1.5.0",
+      "supplier": "Org:CoreLib",
+      "licenseDeclared": "MIT"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "Example SPDX 2.3",
+  "documentNamespace": "http://spdx.org/spdxdocs/example",
+  "creationInfo": {
+    "creators": [
+      "Tool: SPDX-Generator-1.0",
+      "Person: Jane Doe"
+    ],
+    "created": "2024-06-30T13:40:00Z"
+  },
+  "packages": [
+    {
+      "name": "lib-abc",
+      "SPDXID": "SPDXRef-Package-abc",
+      "versionInfo": "2.0.0",
+      "supplier": "Organization: ABC Corp",
+      "downloadLocation": "http://example.com/abc.tar.gz",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "Copyright 2024 ABC Corp",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lib-abc@2.0.0"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-Package-abc",
+      "relationshipType": "DESCRIBES"
+    }
+  ]
+}

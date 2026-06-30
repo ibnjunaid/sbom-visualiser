@@ -1,0 +1,77 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-06-30T13:40:00Z",
+    "tools": [
+      {
+        "vendor": "CycloneDX",
+        "name": "Generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "pkg:npm/my-app@1.0.0",
+      "type": "application",
+      "name": "my-app",
+      "version": "1.0.0"
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:npm/react@18.2.0",
+      "type": "library",
+      "name": "react",
+      "version": "18.2.0",
+      "purl": "pkg:npm/react@18.2.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:npm/lucide-react@0.300.0",
+      "type": "library",
+      "name": "lucide-react",
+      "version": "0.300.0",
+      "purl": "pkg:npm/lucide-react@0.300.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:npm/my-app@1.0.0",
+      "dependsOn": [
+        "pkg:npm/react@18.2.0",
+        "pkg:npm/lucide-react@0.300.0"
+      ]
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2024-1234",
+      "source": { "name": "NVD" },
+      "description": "Example vulnerability in react",
+      "ratings": [
+        {
+          "severity": "high",
+          "score": 7.5
+        }
+      ],
+      "affects": [
+        { "ref": "pkg:npm/react@18.2.0" }
+      ]
+    }
+  ]
+}
