@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FileUp, Share2, Info, Database, List, Code, Download, ExternalLink, ShieldAlert, ShieldCheck, AlertCircle } from 'lucide-react';
+import { FileUp, Share2, Info, Database, List, Code, Download, ExternalLink, ShieldAlert, ShieldCheck, AlertCircle, Link as LinkIcon } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { SummaryHeader } from './components/SummaryHeader';
 import { ComponentTable } from './components/ComponentTable';
@@ -7,10 +7,12 @@ import { DependencyGraph } from './components/DependencyGraph';
 import { ComponentDetailPanel } from './components/ComponentDetailPanel';
 import { LicenseView } from './components/LicenseView';
 import { VulnerabilityView } from './components/VulnerabilityView';
+import { DocsView } from './components/DocsView';
+import { PrivacyView } from './components/PrivacyView';
 import type { NormalizedSBOM, SBOMComponent } from './models/sbom';
 import { cn } from './utils/cn';
 
-type ViewMode = 'summary' | 'components' | 'graph' | 'licenses' | 'vulnerabilities' | 'raw';
+type ViewMode = 'summary' | 'components' | 'graph' | 'licenses' | 'vulnerabilities' | 'raw' | 'docs' | 'privacy';
 
 function App() {
   const [sbom, setSbom] = useState<NormalizedSBOM | null>(null);
@@ -20,6 +22,7 @@ function App() {
   const [error, setError] = useState<{ message: string; line?: number } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [selectedComponent, setSelectedComponent] = useState<SBOMComponent | null>(null);
+  const [urlInput, setUrlInput] = useState('');
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -51,12 +54,31 @@ function App() {
     reader.readAsText(file);
   }, []);
 
+  const loadFromUrl = async (url: string) => {
+      if (!url) return;
+      setIsLoading(true);
+      setError(null);
+      const name = url.split('/').pop() || 'Remote SBOM';
+      setFileName(name);
+      try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const content = await response.text();
+          setRawContent(content);
+          workerRef.current?.postMessage({ content, fileName: name });
+      } catch (err: any) {
+          setError({ message: `Failed to load SBOM from URL: ${err.message}. Ensure the URL has CORS enabled.` });
+          setIsLoading(false);
+      }
+  };
+
   const loadSample = async (name: string) => {
       setIsLoading(true);
       setError(null);
       setFileName(name);
       try {
-          const response = await fetch(`./samples/${name}`);
+          const baseUrl = import.meta.env.BASE_URL || '/';
+          const response = await fetch(`${baseUrl}samples/${name}`);
           const content = await response.text();
           setRawContent(content);
           workerRef.current?.postMessage({ content, fileName: name });
@@ -95,10 +117,17 @@ function App() {
       a.click();
   };
 
+  const goToHome = () => {
+      setSbom(null);
+      setError(null);
+      setViewMode('summary');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      {/* Navbar */}
       <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={goToHome}>
           <div className="bg-blue-600 p-1.5 rounded-lg shadow-sm shadow-blue-200">
             <Database className="text-white w-5 h-5" />
           </div>
@@ -106,16 +135,21 @@ function App() {
             SBOM<span className="text-blue-600">Scope</span>
           </h1>
         </div>
-        <div className="flex items-center gap-4">
-          <a href="https://github.com/jules" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 transition-colors">
+        <div className="flex items-center gap-6">
+          <button onClick={() => setViewMode('docs')} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-wider">Docs</button>
+          <a href="https://github.com/ibnjunaid/sbom-visualiser" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 transition-colors">
             <GithubIcon />
           </a>
         </div>
       </nav>
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
-        {!sbom ? (
-          <div className="max-w-2xl mx-auto space-y-8 mt-12">
+        {viewMode === 'docs' ? (
+            <DocsView />
+        ) : viewMode === 'privacy' ? (
+            <PrivacyView />
+        ) : !sbom ? (
+          <div className="max-w-2xl mx-auto space-y-12 mt-12">
             <div className="text-center space-y-4">
                 <h2 className="text-4xl font-black text-slate-900 tracking-tight">Visualize your SBOMs instantly.</h2>
                 <p className="text-slate-500 text-lg">Secure, fast, and entirely client-side. No data ever leaves your browser.</p>
@@ -125,20 +159,49 @@ function App() {
               <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-bold">Parsing Error</p>
+                  <p className="font-bold">Error</p>
                   <p className="text-sm">{error.message}</p>
                 </div>
               </div>
             )}
 
-            <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
-
-            <div className="flex flex-col items-center gap-4">
-                <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Or try a sample</p>
-                <div className="flex flex-wrap justify-center gap-3">
-                    <SampleButton onClick={() => loadSample('cyclonedx-1.5.json')} label="CycloneDX 1.5 JSON" />
-                    <SampleButton onClick={() => loadSample('spdx-2.3.json')} label="SPDX 2.3 JSON" />
-                    <SampleButton onClick={() => loadSample('spdx-3.0.json')} label="SPDX 3.0 (Beta)" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                    <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <LinkIcon size={18} className="text-blue-500" />
+                        Load from URL
+                    </h3>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="https://example.com/sbom.json"
+                            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={urlInput}
+                            onChange={(e) => setUrlInput(e.target.value)}
+                        />
+                        <button
+                            onClick={() => loadFromUrl(urlInput)}
+                            disabled={isLoading || !urlInput}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                            Load
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Note: The remote server must allow CORS requests.</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <Database size={18} className="text-blue-500" />
+                        Try a Sample
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        <button onClick={() => loadSample('cyclonedx-1.5.json')} className="text-xs font-medium px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full hover:border-blue-300 hover:text-blue-600 transition-all">CycloneDX 1.5</button>
+                        <button onClick={() => loadSample('spdx-2.3.json')} className="text-xs font-medium px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full hover:border-blue-300 hover:text-blue-600 transition-all">SPDX 2.3</button>
+                        <button onClick={() => loadSample('spdx-3.0.json')} className="text-xs font-medium px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full hover:border-blue-300 hover:text-blue-600 transition-all">SPDX 3.0</button>
+                    </div>
                 </div>
             </div>
           </div>
@@ -198,9 +261,9 @@ function App() {
           <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-slate-400 text-sm">© 2024 SBOMScope — Open Source SBOM Visualizer</p>
               <div className="flex items-center gap-6">
-                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Privacy</a>
-                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Docs</a>
-                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1">
+                  <button onClick={() => setViewMode('privacy')} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">Privacy</button>
+                  <button onClick={() => setViewMode('docs')} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">Docs</button>
+                  <a href="https://github.com/ibnjunaid/sbom-visualiser" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1 transition-colors">
                       GitHub <ExternalLink size={12} />
                   </a>
               </div>
@@ -217,15 +280,6 @@ function App() {
 
 const GithubIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-);
-
-const SampleButton: React.FC<{ onClick: () => void; label: string }> = ({ onClick, label }) => (
-    <button
-        onClick={onClick}
-        className="px-4 py-2 bg-white border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-all shadow-sm"
-    >
-        {label}
-    </button>
 );
 
 const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
