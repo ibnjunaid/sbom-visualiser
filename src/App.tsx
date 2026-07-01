@@ -9,7 +9,6 @@ import { LicenseView } from './components/LicenseView';
 import { VulnerabilityView } from './components/VulnerabilityView';
 import type { NormalizedSBOM, SBOMComponent } from './models/sbom';
 import { cn } from './utils/cn';
-import { loadSbomFromUrl } from './utils/sbomLoader';
 
 type ViewMode = 'summary' | 'components' | 'graph' | 'licenses' | 'vulnerabilities' | 'raw';
 
@@ -21,7 +20,6 @@ function App() {
   const [error, setError] = useState<{ message: string; line?: number } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [selectedComponent, setSelectedComponent] = useState<SBOMComponent | null>(null);
-  const isGraphMode = viewMode === 'graph';
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -51,35 +49,6 @@ function App() {
       workerRef.current?.postMessage({ content, fileName: file.name });
     };
     reader.readAsText(file);
-  }, []);
-
-  const handleUrlLoad = useCallback(async (url: string) => {
-    const trimmedUrl = url.trim();
-
-    if (!trimmedUrl) {
-      setError({ message: 'Please enter an SBOM URL.' });
-      return;
-    }
-
-    try {
-      new URL(trimmedUrl);
-    } catch {
-      setError({ message: 'Please enter a valid URL.' });
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { content, fileName: resolvedFileName } = await loadSbomFromUrl(trimmedUrl);
-      setFileName(resolvedFileName);
-      setRawContent(content);
-      workerRef.current?.postMessage({ content, fileName: resolvedFileName });
-    } catch (err) {
-      setError({ message: err instanceof Error ? err.message : 'Failed to load SBOM from URL.' });
-      setIsLoading(false);
-    }
   }, []);
 
   const loadSample = async (name: string) => {
@@ -144,10 +113,7 @@ function App() {
         </div>
       </nav>
 
-      <main className={cn(
-        "flex-1 container mx-auto px-4 py-8 max-w-7xl",
-        isGraphMode && 'px-0 py-0 max-w-full'
-      )}>
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
         {!sbom ? (
           <div className="max-w-2xl mx-auto space-y-8 mt-12">
             <div className="text-center space-y-4">
@@ -165,7 +131,7 @@ function App() {
               </div>
             )}
 
-            <FileUpload onFileSelect={handleFileSelect} onUrlLoad={handleUrlLoad} isLoading={isLoading} />
+            <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
 
             <div className="flex flex-col items-center gap-4">
                 <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Or try a sample</p>
@@ -207,10 +173,7 @@ function App() {
                 </div>
             </div>
 
-            <div className={cn(
-                "min-h-[600px]",
-                isGraphMode && 'min-h-[calc(100vh-7rem)] h-[calc(100vh-7rem)]'
-            )}>
+            <div className="min-h-[600px]">
                 {viewMode === 'summary' && <SummaryHeader metadata={sbom.metadata} />}
                 {viewMode === 'components' && <ComponentTable components={sbom.components} onSelectComponent={setSelectedComponent} />}
                 {viewMode === 'graph' && <DependencyGraph components={sbom.components} relationships={sbom.relationships} />}
@@ -235,9 +198,9 @@ function App() {
           <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-slate-400 text-sm">© 2024 SBOMScope — Open Source SBOM Visualizer</p>
               <div className="flex items-center gap-6">
-                  <a href="/privacy.html" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Privacy</a>
-                  <a href="/docs.html" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Docs</a>
-                  <a href="https://github.com/ibnjunaid/sbom-visualiser" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1">
+                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Privacy</a>
+                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Docs</a>
+                  <a href="#" className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest flex items-center gap-1">
                       GitHub <ExternalLink size={12} />
                   </a>
               </div>

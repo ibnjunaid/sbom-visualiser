@@ -11,12 +11,11 @@ interface DependencyGraphProps {
 export const DependencyGraph: React.FC<DependencyGraphProps> = ({ components, relationships }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
-  const [layoutType, setLayoutType] = useState<'breadthfirst' | 'cose' | 'circle' | 'grid'>('breadthfirst');
+  const [layoutType, setLayoutType] = useState<'breadthfirst' | 'cose'>('breadthfirst');
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const nodeIds = new Set(components.map(c => c.id));
     const nodes = components.map(c => ({
       data: {
         id: c.id,
@@ -25,16 +24,14 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ components, re
       }
     }));
 
-    const edges = relationships
-      .map((r, i) => ({
-        data: {
-          id: `e${i}`,
-          source: r.source,
-          target: r.target,
-          label: r.type
-        }
-      }))
-      .filter(edge => nodeIds.has(edge.data.source) && nodeIds.has(edge.data.target));
+    const edges = relationships.map((r, i) => ({
+      data: {
+        id: `e${i}`,
+        source: r.source,
+        target: r.target,
+        label: r.type
+      }
+    }));
 
     const cy = cytoscape({
       container: containerRef.current,
