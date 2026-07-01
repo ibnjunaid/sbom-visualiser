@@ -32,7 +32,7 @@ A fully static, client-side SBOM (Software Bill of Materials) visualizer.
 
 1. Install dependencies:
    ```bash
-   npm install
+   npm install 
    ```
 
 2. Start the development server:
