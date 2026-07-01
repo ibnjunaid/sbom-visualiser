@@ -4,11 +4,13 @@ import { cn } from '../utils/cn';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
+  onUrlLoad: (url: string) => void;
   isLoading: boolean;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onUrlLoad, isLoading }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -32,6 +34,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading 
     if (e.target.files && e.target.files.length > 0) {
       onFileSelect(e.target.files[0]);
     }
+  };
+
+  const handleUrlSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    onUrlLoad(urlInput);
   };
 
   return (
@@ -62,6 +69,28 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading 
       <p className="text-slate-500 text-center max-w-sm">
         Drag and drop your SPDX (.spdx, .json, .yaml) or CycloneDX (.json, .xml) file here, or click to browse.
       </p>
+      <form className="mt-6 w-full max-w-md space-y-3" onSubmit={handleUrlSubmit} onClick={(e) => e.stopPropagation()}>
+        <label className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+          Or load from URL
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="https://example.com/sbom.spdx.json"
+            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          >
+            Load
+          </button>
+        </div>
+      </form>
       <div className="mt-6 flex items-center gap-2 text-xs text-slate-400">
         <FileCode size={14} />
         <span>Fully client-side. Your data never leaves your browser.</span>
