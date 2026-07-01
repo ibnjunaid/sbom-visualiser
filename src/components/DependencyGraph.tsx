@@ -16,6 +16,8 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ components, re
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const nodeIds = new Set(components.map(c => c.id));
+
     const nodes = components.map(c => ({
       data: {
         id: c.id,
@@ -24,14 +26,17 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({ components, re
       }
     }));
 
-    const edges = relationships.map((r, i) => ({
-      data: {
-        id: `e${i}`,
-        source: r.source,
-        target: r.target,
-        label: r.type
-      }
-    }));
+    // Filter edges to ensure both source and target exist
+    const edges = relationships
+      .filter(r => nodeIds.has(r.source) && nodeIds.has(r.target))
+      .map((r, i) => ({
+        data: {
+          id: `e${i}`,
+          source: r.source,
+          target: r.target,
+          label: r.type
+        }
+      }));
 
     const cy = cytoscape({
       container: containerRef.current,
