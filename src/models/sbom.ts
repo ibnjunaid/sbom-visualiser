@@ -33,6 +33,7 @@ export interface SBOMComponent {
   version?: string;
   type: ComponentType;
   purl?: string;
+  cpe?: string; // Common Platform Enumeration
   bomRef?: string; // Original reference in the SBOM
   supplier?: string;
   author?: string;
