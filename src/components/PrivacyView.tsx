@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Lock, EyeOff, ServerOff, Globe } from 'lucide-react';
+import { ShieldCheck, Lock, EyeOff, ServerOff, Globe, Share2 } from 'lucide-react';
 
 export const PrivacyView: React.FC = () => {
   return (
@@ -23,7 +23,7 @@ export const PrivacyView: React.FC = () => {
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed">
                 There is no server-side component to this application. All parsing, processing, and rendering happen
-                entirely within your browser. Once the static files are loaded, no data is sent over the network.
+                entirely within your browser. Once the static files are loaded, no data is sent to our servers.
             </p>
         </div>
 
@@ -40,12 +40,13 @@ export const PrivacyView: React.FC = () => {
 
         <div className="space-y-4">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <Lock className="text-blue-500" size={20} />
-                Local Storage Only
+                <Share2 className="text-blue-500" size={20} />
+                External API Notice
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-                If you use the "Load from URL" feature, the file is fetched directly from the source to your browser.
-                We never act as a proxy or store any of your configuration.
+                If you use the "Live Audit" or "Load from URL" features, your browser will send PURLs or URLs
+                directly to <span className="font-bold">OSV.dev</span> or the specified source. No other component
+                data is transmitted.
             </p>
         </div>
 

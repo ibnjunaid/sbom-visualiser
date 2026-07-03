@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { SBOMComponent } from '../models/sbom';
-import { X, ExternalLink, Shield, Globe, FileText, Info as InfoIcon, Search } from 'lucide-react';
+import { X, ExternalLink, Shield, Globe, FileText, Info as InfoIcon, Search, ShieldAlert, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { fetchVulnerabilitiesForPurl, type OSVVulnerability } from '../utils/osvService';
 
 interface ComponentDetailPanelProps {
   component: SBOMComponent | null;
@@ -9,6 +10,22 @@ interface ComponentDetailPanelProps {
 }
 
 export const ComponentDetailPanel: React.FC<ComponentDetailPanelProps> = ({ component, onClose }) => {
+  const [liveVulns, setLiveVulns] = useState<OSVVulnerability[]>([]);
+  const [isLoadingVulns, setIsLoadingVulns] = useState(false);
+
+  useEffect(() => {
+    if (component?.purl) {
+      setIsLoadingVulns(true);
+      setLiveVulns([]);
+      fetchVulnerabilitiesForPurl(component.purl)
+        .then(setLiveVulns)
+        .finally(() => setIsLoadingVulns(false));
+    } else {
+      setLiveVulns([]);
+      setIsLoadingVulns(false);
+    }
+  }, [component]);
+
   if (!component) return null;
 
   const allLicenses = [...(component.licenses.declared || []), ...(component.licenses.concluded || [])];
@@ -64,6 +81,34 @@ export const ComponentDetailPanel: React.FC<ComponentDetailPanelProps> = ({ comp
                 </div>
             )}
         </div>
+
+        {/* Live OSV.dev Results */}
+        <Section title="Live Security Status (OSV.dev)" icon={<ShieldAlert size={16} />}>
+            {isLoadingVulns ? (
+                <div className="flex items-center gap-2 text-slate-400 text-sm py-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Checking for vulnerabilities...
+                </div>
+            ) : liveVulns.length > 0 ? (
+                <div className="space-y-2">
+                    {liveVulns.map(v => (
+                        <div key={v.id} className="bg-red-50 border border-red-100 p-2 rounded flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-bold text-red-700">{v.id}</p>
+                                <p className="text-[10px] text-red-600 line-clamp-1">{v.summary || 'No summary'}</p>
+                            </div>
+                            <a href={`https://osv.dev/vulnerability/${v.id}`} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-700">
+                                <ExternalLink size={14} />
+                            </a>
+                        </div>
+                    ))}
+                </div>
+            ) : component.purl ? (
+                <p className="text-sm text-green-600 bg-green-50 p-2 rounded border border-green-100 italic">No known vulnerabilities found on OSV.dev.</p>
+            ) : (
+                <p className="text-sm text-slate-400 italic">Add a PURL to enable live lookups.</p>
+            )}
+        </Section>
 
         <Section title="General Information" icon={<InfoIcon size={16} />}>
             <DetailItem label="Supplier" value={component.supplier} />
