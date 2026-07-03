@@ -12,7 +12,7 @@ export async function fetchVulnerabilitiesForPurl(purl: string): Promise<OSVVuln
     const response = await fetch('https://api.osv.dev/v1/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ purl })
+      body: JSON.stringify({ package: { purl } })
     });
 
     if (!response.ok) return [];
@@ -42,16 +42,13 @@ export async function batchFetchVulnerabilities(purls: string[]): Promise<Record
     // For simplicity, we'll map them individually for now or use the batch endpoint if preferred.
     // The current OSV batch API actually takes a list of queries.
 
-    const queries = purls.map(purl => ({ purl }));
+    const queries = purls.map(purl => ({ package: { purl } }));
 
     // We'll process in chunks of 50 to avoid timeouts/limits
     const chunkSize = 50;
     for (let i = 0; i < queries.length; i += chunkSize) {
         const chunk = queries.slice(i, i + chunkSize);
         try {
-            // Note: OSV doesn't have a single "batch" endpoint that returns all in one JSON list easily,
-            // it expects individual requests or specific batch formats.
-            // Actually, they have /v1/querybatch
             const response = await fetch('https://api.osv.dev/v1/querybatch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -62,7 +59,7 @@ export async function batchFetchVulnerabilities(purls: string[]): Promise<Record
                 const data = await response.json();
                 if (data.results && Array.isArray(data.results)) {
                     data.results.forEach((res: any, idx: number) => {
-                        const purl = chunk[idx].purl;
+                        const purl = purls[i + idx];
                         if (res.vulns) {
                             results[purl] = res.vulns;
                         }
