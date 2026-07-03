@@ -27,7 +27,6 @@ export class CycloneDXJSONParser implements Parser {
     const relationships: SBOMRelationship[] = [];
     const vulnerabilities: SBOMVulnerability[] = [];
 
-    // Metadata
     const metadata = {
       format: 'CycloneDX' as const,
       specVersion: json.specVersion || 'unknown',
@@ -37,7 +36,6 @@ export class CycloneDXJSONParser implements Parser {
       componentCount: 0,
     };
 
-    // Components
     if (json.metadata?.component) {
       components.push(this.mapComponent(json.metadata.component));
     }
@@ -50,7 +48,6 @@ export class CycloneDXJSONParser implements Parser {
 
     metadata.componentCount = components.length;
 
-    // Relationships (Dependencies)
     if (Array.isArray(json.dependencies)) {
       for (const dep of json.dependencies) {
         if (Array.isArray(dep.dependsOn)) {
@@ -65,7 +62,6 @@ export class CycloneDXJSONParser implements Parser {
       }
     }
 
-    // Vulnerabilities
     if (Array.isArray(json.vulnerabilities)) {
       for (const v of json.vulnerabilities) {
         if (Array.isArray(v.affects)) {
@@ -89,12 +85,13 @@ export class CycloneDXJSONParser implements Parser {
 
   private mapComponent(c: any): SBOMComponent {
     return {
-      id: c['bom-ref'] || c.purl || `${c.name}@${c.version}`,
+      id: c['bom-ref'] || c.purl || c.cpe || `${c.name}@${c.version}`,
       bomRef: c['bom-ref'],
       name: c.name,
       version: c.version,
       type: this.mapType(c.type),
       purl: c.purl,
+      cpe: c.cpe,
       supplier: c.supplier?.name,
       author: c.author,
       publisher: c.publisher,
@@ -156,7 +153,6 @@ export class CycloneDXJSONParser implements Parser {
         return tools.services.map((s: any) => s.name).join(', ');
     }
     if (Array.isArray(tools)) {
-        // legacy cdx format
         return tools.map((t: any) => `${t.vendor ? t.vendor + ' ' : ''}${t.name}${t.version ? ' ' + t.version : ''}`).join(', ');
     }
     return undefined;

@@ -97,7 +97,8 @@ export class SPDXJSONParser implements Parser {
       name: p.name,
       version: p.versionInfo,
       type: 'library',
-      purl: this.findPurl(p.externalRefs),
+      purl: this.findExternalRef(p.externalRefs, ['purl', 'PACKAGE-MANAGER']),
+      cpe: this.findExternalRef(p.externalRefs, ['cpe23Type', 'cpe22Type', 'SECURITY']),
       supplier: this.extractSupplier(p.supplier),
       author: this.extractSupplier(p.originator),
       description: p.description || p.summary,
@@ -138,9 +139,9 @@ export class SPDXJSONParser implements Parser {
     }
   }
 
-  private findPurl(refs: any[]): string | undefined {
+  private findExternalRef(refs: any[], types: string[]): string | undefined {
     if (!Array.isArray(refs)) return undefined;
-    return refs.find(r => r.referenceType === 'purl' || r.referenceCategory === 'PACKAGE-MANAGER')?.referenceLocator;
+    return refs.find(r => types.includes(r.referenceType) || types.includes(r.referenceCategory))?.referenceLocator;
   }
 
   private extractSupplier(supplier: string): string | undefined {

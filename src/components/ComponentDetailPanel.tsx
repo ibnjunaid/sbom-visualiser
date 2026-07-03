@@ -1,6 +1,6 @@
 import React from 'react';
 import type { SBOMComponent } from '../models/sbom';
-import { X, ExternalLink, Shield, Globe, FileText, Info as InfoIcon } from 'lucide-react';
+import { X, ExternalLink, Shield, Globe, FileText, Info as InfoIcon, Search } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface ComponentDetailPanelProps {
@@ -12,6 +12,10 @@ export const ComponentDetailPanel: React.FC<ComponentDetailPanelProps> = ({ comp
   if (!component) return null;
 
   const allLicenses = [...(component.licenses.declared || []), ...(component.licenses.concluded || [])];
+
+  const getNvdUrl = (cpe: string) => {
+      return `https://nvd.nist.gov/vuln/search/results?form_type=Advanced&results_type=overview&query=${encodeURIComponent(cpe)}&search_type=all`;
+  };
 
   return (
     <div className={cn(
@@ -26,16 +30,37 @@ export const ComponentDetailPanel: React.FC<ComponentDetailPanelProps> = ({ comp
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-8">
-            <div className="flex items-center gap-2 mb-2">
+        <div className="mb-8 space-y-3">
+            <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase tracking-wider">
                 {component.type}
                 </span>
                 <span className="text-slate-500 text-sm font-medium">Version {component.version || 'Unknown'}</span>
             </div>
             {component.purl && (
-                <div className="bg-slate-50 p-2 rounded text-[11px] font-mono text-slate-600 break-all border border-slate-100">
-                    {component.purl}
+                <div className="group">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">PURL</p>
+                    <div className="bg-slate-50 p-2 rounded text-[11px] font-mono text-slate-600 break-all border border-slate-100">
+                        {component.purl}
+                    </div>
+                </div>
+            )}
+            {component.cpe && (
+                <div className="group">
+                    <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] uppercase font-bold text-slate-400">CPE</p>
+                        <a
+                            href={getNvdUrl(component.cpe)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-blue-600 hover:text-blue-800 flex items-center gap-1 font-bold"
+                        >
+                            <Search size={10} /> Search NVD
+                        </a>
+                    </div>
+                    <div className="bg-blue-50 p-2 rounded text-[11px] font-mono text-blue-700 break-all border border-blue-100">
+                        {component.cpe}
+                    </div>
                 </div>
             )}
         </div>
