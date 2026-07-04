@@ -105,6 +105,8 @@ export class SPDXTagValueParser implements Parser {
           name: p.name,
           version: p.versionInfo,
           type: 'library',
+          purl: p.externalRefs.find((r: any) => r.referenceType === 'purl')?.referenceLocator,
+          cpe: p.externalRefs.find((r: any) => r.referenceType?.startsWith('cpe'))?.referenceLocator,
           supplier: p.supplier?.replace(/^(Organization|Person):\s*/, ''),
           licenses: {
               declared: p.licenseDeclared ? [{ expression: p.licenseDeclared }] : [],
