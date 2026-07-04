@@ -33,3 +33,4 @@ To prevent blocking the main thread during large file parsing, all parsing logic
 ## Deployment
 - **GitHub Pages**: Fully static build. Deployed via GitHub Actions (`.github/workflows/deploy.yml`).
 - **Offline-ready**: Built to work as a static bundle; no external API calls or backend required.
+- 
